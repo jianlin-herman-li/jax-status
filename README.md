@@ -88,7 +88,7 @@ The repository should contain:
 - `pyproject.toml`  
   A minimal Python project definition for **jax-status**.
 
-- `jax-status/`  
+- `jax_status/`  
   Python package implementing the verbose JAX status inspection logic.
 
 - `flake.nix`  
@@ -120,3 +120,5 @@ Nix files should be short and simple if possible.
    - Each corresponding value is printed
    - GPU visibility matches `nvidia-smi` on Linux systems
    - Missing or unsupported features are clearly reported
+
+Automatically run `nix develop -c jax-status`, and fix errors until it succeeds.
