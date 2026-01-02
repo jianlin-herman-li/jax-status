@@ -646,3 +646,28 @@ Removed the repo-level `.nvidia-driver-libs` usage and switched the shell to cre
 - Removed the stale `.nvidia-driver-libs` directory from the workspace.
 - Verified: `nix develop -c jax-status` shows `.nvidia-driver-libs` missing and `jax.default_backend()` = `gpu`.
 ```
+
+## Message 19
+- Role: user
+- Content:
+```
+Is it possible to avid hardcode libcuda.so.1, include it via nix.
+```
+
+## Message 20
+- Role: assistant
+- Content:
+```
+Short answer: not really in a portable way. `libcuda.so.1` comes from the NVIDIA driver (unfree, kernel-coupled), and Nixpkgs doesn’t provide a universally safe, redistributable `libcuda` to bake into a dev shell for non‑NixOS hosts. On NixOS you can rely on `/run/opengl-driver/lib` and avoid hardcoding a filename, but on Ubuntu/macOS the driver is outside the Nix store.
+
+If you want, I can:
+1) Make the shell use `/run/opengl-driver/lib` when present (NixOS), and otherwise skip any driver injection.
+2) Add a `devShells.cuda` that expects a host driver path supplied via an env var (e.g. `JAX_DRIVER_LIB_DIR`), so no filename is hardcoded in the flake.
+```
+
+## Message 21
+- Role: user
+- Content:
+```
+git commit and push
+```
