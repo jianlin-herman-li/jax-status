@@ -278,3 +278,59 @@ I'll save the conversation and commit the changes.
 - Appended Sessions 13-14 to conversation.md
 - Committed changes to git
 
+---
+
+## Session 15 - Removing Python Wrapper
+
+### User
+```
+Is it still neccsary to wrap python since libcuda.so.1 is already under CUDA_PATH?
+```
+
+### Assistant
+No, the Python wrapper is no longer necessary! Since we have the symlink to `libcuda.so.1` under `CUDA_PATH/lib/` and we're setting `LD_LIBRARY_PATH` in the shellHook, the dynamic linker can find the library automatically.
+
+**Changes made:**
+- Removed the `pythonWrapper` that used `LD_PRELOAD` to preload the CUDA driver library
+- Updated `shellHook` to add `CUDA_PATH/lib` to `LD_LIBRARY_PATH` instead
+- Verified both `python -c "import jax; print(jax.devices())"` and `jax-status` work correctly
+
+**Result:** The code is simpler and cleaner. The symlink under `CUDA_PATH` combined with `LD_LIBRARY_PATH` in the shellHook is sufficient for the dynamic linker to find the library, making the Python wrapper unnecessary.
+
+---
+
+## Session 16 - Removing Preloading Code from main.py
+
+### User
+```
+Is this @main.py (9-48) still needed?
+```
+
+### Assistant
+No, the preloading code in `main.py` is no longer needed! Since `LD_LIBRARY_PATH` is set in the shellHook to include `CUDA_PATH/lib/`, the dynamic linker can find the library automatically.
+
+**Changes made:**
+- Removed the entire preloading block (lines 9-48) that used `ctypes.CDLL` to preload the library
+- Removed the `LD_LIBRARY_PATH` modification (redundant since it's set in the shellHook)
+- Removed the unused `ctypes` import
+- Verified both `jax-status` and direct Python access work correctly
+
+**Result:** The code is much simpler. The symlink under `CUDA_PATH` combined with `LD_LIBRARY_PATH` in the shellHook is sufficient for JAX to find and use the CUDA driver library without explicit preloading.
+
+---
+
+## Session 17 - Save Conversation and Commit
+
+### User
+```
+save conversation and git commit
+```
+
+### Assistant
+I'll save the conversation and commit the changes.
+
+**Actions taken:**
+- Appended Sessions 15-17 to conversation.md
+- Updated cost.md with Run 4 information
+- Committed changes to git
+

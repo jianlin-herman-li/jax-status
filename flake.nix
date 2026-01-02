@@ -59,19 +59,6 @@
         else
           pkgs.cudaPackages.cudatoolkit;
 
-        # Create Python wrapper that preloads CUDA driver library
-        # Note: libcuda.so.1 is provided by system NVIDIA driver, not Nix packages
-        pythonWrapper = if pkgs.stdenv.isLinux then
-          pkgs.writeShellScriptBin "python" ''
-            # Try to preload system CUDA driver library if available
-            if [ -f /usr/lib/x86_64-linux-gnu/libcuda.so.1 ]; then
-              export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libcuda.so.1:$LD_PRELOAD
-            elif [ -f /usr/lib/libcuda.so.1 ]; then
-              export LD_PRELOAD=/usr/lib/libcuda.so.1:$LD_PRELOAD
-            fi
-            exec ${python312}/bin/python "$@"
-          ''
-        else null;
       in
       {
         packages.default = jax-status;
@@ -98,8 +85,9 @@
           shellHook = if pkgs.stdenv.isLinux then
             ''
               export CUDA_PATH=${cudaPathWithDriver}
-              # Use Python wrapper that preloads CUDA
-              export PATH="${pythonWrapper}/bin:$PATH"
+              # Add CUDA_PATH/lib to LD_LIBRARY_PATH so libcuda.so.1 symlink is discoverable
+              # This makes the Python wrapper unnecessary since the library is in the search path
+              export LD_LIBRARY_PATH="${cudaPathWithDriver}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             ''
           else
             "";
