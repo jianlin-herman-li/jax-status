@@ -6,6 +6,23 @@ Create a minimal Python project named **jax-status** with the following properti
 - Depends on `jax[cuda]`
 - Provides a verbose script or CLI that inspects the JAX runtime
 
+## Cost Tracking
+
+Add basic cost and usage tracking to the project.
+
+The system should record the following information for each run:
+
+- The name of the Agent used
+- The name of the model used
+- Total number of tokens used
+- Total cost in USD
+- Total wall-clock time spent
+
+After each run, this information must be written to a file named `cost.md` in a clear, human-readable format.
+
+The file should be updated or appended in a consistent way so that multiple runs can be compared over time. 
+And add a summary after it succeeds.
+
 ## Script Requirements
 
 ### Verbose output
