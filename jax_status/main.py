@@ -8,19 +8,35 @@ import ctypes
 
 # Preload CUDA driver library on Linux before importing JAX
 # This ensures the library is available when JAX tries to initialize CUDA
+# Note: libcuda.so.1 is provided by the system NVIDIA driver, not Nix packages
 if sys.platform == "linux":
-    cuda_driver_lib = "/usr/lib/x86_64-linux-gnu/libcuda.so.1"
-    if os.path.exists(cuda_driver_lib):
+    # Try to find libcuda.so.1 in common system locations
+    # The NVIDIA driver library cannot be packaged by Nix as it's system-specific
+    cuda_driver_paths = [
+        "/usr/lib/x86_64-linux-gnu/libcuda.so.1",
+        "/usr/lib/libcuda.so.1",
+        "/usr/local/cuda/lib64/libcuda.so.1",
+    ]
+    
+    cuda_driver_lib = None
+    for path in cuda_driver_paths:
+        if os.path.exists(path):
+            cuda_driver_lib = path
+            break
+    
+    if cuda_driver_lib:
         try:
             # Preload the CUDA driver library
             ctypes.CDLL(cuda_driver_lib, mode=ctypes.RTLD_GLOBAL)
         except Exception:
             pass
-        # Also set LD_LIBRARY_PATH as fallback
-        cuda_driver_path = "/usr/lib/x86_64-linux-gnu"
+    
+    # Also set LD_LIBRARY_PATH as fallback for system driver library
+    system_cuda_path = "/usr/lib/x86_64-linux-gnu"
+    if os.path.exists(system_cuda_path):
         current_ld_path = os.environ.get("LD_LIBRARY_PATH", "")
-        if cuda_driver_path not in current_ld_path:
-            os.environ["LD_LIBRARY_PATH"] = f"{current_ld_path}:{cuda_driver_path}" if current_ld_path else cuda_driver_path
+        if system_cuda_path not in current_ld_path:
+            os.environ["LD_LIBRARY_PATH"] = f"{current_ld_path}:{system_cuda_path}" if current_ld_path else system_cuda_path
 
 import jax
 import jax.lib
