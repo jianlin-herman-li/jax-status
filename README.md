@@ -5,6 +5,7 @@ Create a minimal Python project named **jax-status** with the following properti
 - Uses **Python ≥ 3.12**
 - Depends on `jax[cuda]`
 - Provides a verbose script or CLI that inspects the JAX runtime
+- Implementation should be simple and minimal; there is no need to be abstract.
 
 ## Conversation Logging
 
@@ -44,8 +45,7 @@ The script must be **verbose** and:
 
 - Print **the API being queried** and **the returned value**
 - Try **many JAX and backend-related APIs**
-- Handle missing or unavailable features gracefully, with clear messages instead of crashes
-
+  
 ### Import style rules
 - Do **not** use `from ... import ...`
 - Use only `import xxx`
@@ -95,10 +95,9 @@ The repository should contain:
   Nix flake entry point.
 
 - `jax-status.nix`  
-  Nix derivation or module defining the development environment.
+  A Nix file that wraps this pyproject into a Nix derivation.
 
-- `jax-status-singleton.nix`
-  Should be the same as `jax-status.nix` except that the Python project (`pyproject.toml` and `jax-status/`) is hard-coded in it.
+Nix files should be short and simple if possible.
   
 ## Nix Requirements
 
