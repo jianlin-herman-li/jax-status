@@ -59,7 +59,7 @@
                 export LD_LIBRARY_PATH="/usr/lib/wsl/lib:$LD_LIBRARY_PATH"
               fi
               if [ -f /usr/lib/x86_64-linux-gnu/libcuda.so.1 ]; then
-                driver_dir="$PWD/.nvidia-driver-libs"
+                driver_dir="''${XDG_RUNTIME_DIR:-/tmp}/jax-status-driver-libs"
                 mkdir -p "$driver_dir"
                 ln -sf /usr/lib/x86_64-linux-gnu/libcuda.so.1 "$driver_dir/libcuda.so.1"
                 if [ -f /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 ]; then

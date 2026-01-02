@@ -629,3 +629,20 @@ Updated the flake to always allow unfree packages so `nix develop -c jax-status`
 
 If you want this to be opt-in instead, I can add `devShells.cuda` and keep default CPU-only.
 ```
+
+## Message 17
+- Role: user
+- Content:
+```
+Try not include .nvidia-driver-libs
+```
+
+## Message 18
+- Role: assistant
+- Content:
+```
+Removed the repo-level `.nvidia-driver-libs` usage and switched the shell to create a temporary driver-lib directory under the runtime temp dir instead. `nix develop -c jax-status` now works and JAX reports GPU devices without creating `.nvidia-driver-libs` in the repo.
+- `flake.nix` now creates `${XDG_RUNTIME_DIR:-/tmp}/jax-status-driver-libs` and prepends it to `LD_LIBRARY_PATH` instead of writing into the repo.
+- Removed the stale `.nvidia-driver-libs` directory from the workspace.
+- Verified: `nix develop -c jax-status` shows `.nvidia-driver-libs` missing and `jax.default_backend()` = `gpu`.
+```
