@@ -32,12 +32,42 @@ Successfully implemented the jax-status project with the following components:
 
 ---
 
+## Run 2 - Refactoring and Python Direct Access
+
+**Date:** 2026-01-02  
+**Agent:** Auto (Cursor AI Assistant)  
+**Model:** Claude Sonnet 4.5 (via Cursor)  
+**Total Tokens:** ~8,000 (estimated)  
+**Total Cost (USD):** ~$0.08 (estimated)  
+**Wall-clock Time:** ~25 minutes  
+
+### Summary
+Continued improvements to the jax-status project:
+- Refactored CUDA selection logic from flake.nix to jax-status.nix for better modularity
+- Moved CUDA_PATH export to jax-status.nix using makeWrapper
+- Enabled direct Python access to JAX with GPU support in development shell
+- Created Python wrapper that preloads CUDA driver library
+
+**Key Achievements:**
+- ✅ Improved code organization by encapsulating CUDA logic in jax-status.nix
+- ✅ Made jax-status package more self-contained with CUDA_PATH in wrapper
+- ✅ Enabled `nix develop -c python -c "import jax; print(jax.devices())"` to work
+- ✅ Both jax-status command and direct Python access now detect GPUs correctly
+
+**Technical Details:**
+- Used makeWrapper to set CUDA_PATH in jax-status binary wrapper
+- Created Python wrapper script with LD_PRELOAD to preload CUDA driver library
+- Added JAX and jaxlibCuda to development shell buildInputs
+- Python wrapper automatically preloads CUDA before executing Python
+
+---
+
 ## Summary
 
-**Total Runs:** 1  
-**Total Estimated Cost:** ~$0.15 USD  
-**Total Time:** ~45 minutes  
+**Total Runs:** 2  
+**Total Estimated Cost:** ~$0.23 USD  
+**Total Time:** ~70 minutes  
 **Success Rate:** 100%  
 
-All project requirements have been successfully met. The jax-status tool now correctly detects and reports GPU availability when running `nix develop -c jax-status` on Linux systems with NVIDIA GPUs.
+All project requirements have been successfully met. The jax-status tool now correctly detects and reports GPU availability when running `nix develop -c jax-status` on Linux systems with NVIDIA GPUs. Additionally, direct Python access to JAX with GPU support is now available in the development shell.
 
