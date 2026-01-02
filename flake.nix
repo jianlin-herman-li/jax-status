@@ -18,11 +18,7 @@
           };
         };
         # Use Python 3.12
-        python312 = pkgs.python312;
         jax-status = pkgs.callPackage ./jax-status.nix {
-          python3 = python312;
-          python3Packages = python312.pkgs;
-          stdenv = pkgs.stdenv;
           cudaPackages = if pkgs.stdenv.isLinux then pkgs.cudaPackages else null;
         };
       in
@@ -33,8 +29,8 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [
             jax-status
-            python312
-            python312.pkgs.pip
+            pkgs.python312
+            pkgs.python312.pkgs.pip
           ] ++ (if pkgs.stdenv.isLinux then [
             # Add CUDA libraries to the environment
             pkgs.cudaPackages.cudatoolkit
