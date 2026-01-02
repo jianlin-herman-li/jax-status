@@ -9,14 +9,22 @@ import ctypes
 # Preload CUDA driver library on Linux before importing JAX
 # This ensures the library is available when JAX tries to initialize CUDA
 # Note: libcuda.so.1 is provided by the system NVIDIA driver, not Nix packages
+# CUDA_PATH may contain a symlink to the system library via Nix wrapper
 if sys.platform == "linux":
-    # Try to find libcuda.so.1 in common system locations
-    # The NVIDIA driver library cannot be packaged by Nix as it's system-specific
-    cuda_driver_paths = [
+    # Try to find libcuda.so.1, checking CUDA_PATH first (may contain symlink)
+    cuda_path = os.environ.get("CUDA_PATH", "")
+    cuda_driver_paths = []
+    
+    # If CUDA_PATH is set, check there first (may have symlink to system lib)
+    if cuda_path:
+        cuda_driver_paths.append(os.path.join(cuda_path, "lib", "libcuda.so.1"))
+    
+    # Also check common system locations
+    cuda_driver_paths.extend([
         "/usr/lib/x86_64-linux-gnu/libcuda.so.1",
         "/usr/lib/libcuda.so.1",
         "/usr/local/cuda/lib64/libcuda.so.1",
-    ]
+    ])
     
     cuda_driver_lib = None
     for path in cuda_driver_paths:

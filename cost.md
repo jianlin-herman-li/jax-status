@@ -64,12 +64,42 @@ Continued improvements to the jax-status project:
 
 ---
 
+## Run 3 - CUDA_PATH Symbolic Link Implementation
+
+**Date:** 2026-01-02  
+**Agent:** Auto (Cursor AI Assistant)  
+**Model:** Claude Sonnet 4.5 (via Cursor)  
+**Total Tokens:** ~8,000 (estimated)  
+**Total Cost (USD):** ~$0.08 (estimated)  
+**Wall-clock Time:** ~25 minutes  
+
+### Summary
+Enhanced CUDA library discovery by creating a symbolic link to system `libcuda.so.1` under `CUDA_PATH`:
+- Created `cudaPathWithDriver` wrapper that combines CUDA toolkit with symlink to system driver library
+- Updated `CUDA_PATH` to point to the combined path containing the symlink
+- Modified `jax_status/main.py` to check `CUDA_PATH/lib/libcuda.so.1` first before system locations
+- Verified symlink resolves correctly and JAX GPU detection works
+
+**Key Achievements:**
+- ✅ System `libcuda.so.1` now discoverable via `CUDA_PATH/lib/libcuda.so.1`
+- ✅ Symlink created using `runCommand` and `symlinkJoin` in Nix
+- ✅ Python code checks `CUDA_PATH/lib/libcuda.so.1` first for better tool compatibility
+- ✅ JAX GPU detection continues to work correctly (2 GPUs detected)
+
+**Technical Details:**
+- Used `runCommand` to create directory with symlink to `/usr/lib/x86_64-linux-gnu/libcuda.so.1`
+- Combined CUDA toolkit and driver library directory using `symlinkJoin`
+- Updated `shellHook` to set `CUDA_PATH` to the combined path
+- Modified library discovery logic in `main.py` to prioritize `CUDA_PATH/lib/libcuda.so.1`
+
+---
+
 ## Summary
 
-**Total Runs:** 2  
-**Total Estimated Cost:** ~$0.21 USD  
-**Total Time:** ~65 minutes  
+**Total Runs:** 3  
+**Total Estimated Cost:** ~$0.29 USD  
+**Total Time:** ~90 minutes  
 **Success Rate:** 100%  
 
-All project requirements have been successfully met. The jax-status tool now correctly detects and reports GPU availability when running `nix develop -c jax-status` on Linux systems with NVIDIA GPUs. Additionally, direct Python access to JAX with GPU support is now available in the development shell, and the codebase has been simplified and improved.
+All project requirements have been successfully met. The jax-status tool now correctly detects and reports GPU availability when running `nix develop -c jax-status` on Linux systems with NVIDIA GPUs. Additionally, direct Python access to JAX with GPU support is now available in the development shell, the codebase has been simplified and improved, and the system CUDA driver library is now discoverable via `CUDA_PATH/lib/libcuda.so.1` for better tool compatibility.
 

@@ -235,3 +235,46 @@ I'll save the conversation and commit the changes.
 - Appended Sessions 10-12 to conversation.md
 - Committed changes to git
 
+---
+
+## Session 13 - Creating Symbolic Link to System libcuda.so.1 under CUDA_PATH
+
+### User
+```
+Is it possible to create symbol link of system libcuda.so.1 under CUDA_PATH?
+```
+
+### Assistant
+Yes, it's possible to create a symbolic link to the system `libcuda.so.1` under `CUDA_PATH`. This makes the driver library discoverable via `CUDA_PATH/lib/libcuda.so.1`, which is useful for tools that look for CUDA libraries in `CUDA_PATH/lib/`.
+
+**Implementation:**
+- Created `cudaPathWithDriver` in `flake.nix` that uses `symlinkJoin` to combine:
+  - The CUDA toolkit from Nix (`pkgs.cudaPackages.cudatoolkit`)
+  - A directory containing a symlink to the system `libcuda.so.1` (created via `runCommand`)
+- Updated `CUDA_PATH` in `shellHook` to point to this combined path
+- Updated `jax_status/main.py` to check `CUDA_PATH/lib/libcuda.so.1` first before falling back to system locations
+
+**Technical Details:**
+- The symlink is created at build time pointing to `/usr/lib/x86_64-linux-gnu/libcuda.so.1` (most common location)
+- Nix allows symlinks to point outside the store (they're resolved at runtime)
+- The symlink is created via `runCommand` that creates a directory structure with the symlink
+- `symlinkJoin` combines the CUDA toolkit and the driver library directory
+
+**Result:** The system `libcuda.so.1` is now discoverable via `CUDA_PATH/lib/libcuda.so.1`. The symlink resolves correctly to the system library, and JAX can detect GPUs correctly. The Python code checks `CUDA_PATH/lib/libcuda.so.1` first, making it easier for tools that look for CUDA libraries in `CUDA_PATH/lib/` to find the driver library.
+
+---
+
+## Session 14 - Save Conversation and Commit
+
+### User
+```
+save conversation and git commit
+```
+
+### Assistant
+I'll save the conversation and commit the changes.
+
+**Actions taken:**
+- Appended Sessions 13-14 to conversation.md
+- Committed changes to git
+

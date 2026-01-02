@@ -35,6 +35,30 @@
           jaxlib = jaxlibCuda;
         };
 
+        # Create CUDA_PATH wrapper that includes symlink to system libcuda.so.1
+        # This makes the driver library discoverable via CUDA_PATH/lib/libcuda.so.1
+        # Note: The symlink points to the most common system location
+        # If the library doesn't exist at that path, the symlink will be broken but harmless
+        cudaPathWithDriver = if pkgs.stdenv.isLinux then
+          let
+            # Create a directory with symlink to system libcuda.so.1
+            # We symlink to the most common location (/usr/lib/x86_64-linux-gnu/libcuda.so.1)
+            # The symlink will be resolved at runtime when the library is actually accessed
+            driverLibDir = pkgs.runCommand "cuda-driver-lib" {} ''
+              mkdir -p $out/lib
+              # Create symlink to most common system location
+              # This will be resolved at runtime when accessed
+              ln -s /usr/lib/x86_64-linux-gnu/libcuda.so.1 $out/lib/libcuda.so.1
+            '';
+          in
+          # Combine CUDA toolkit with driver library symlink
+          pkgs.symlinkJoin {
+            name = "cuda-with-driver";
+            paths = [ pkgs.cudaPackages.cudatoolkit driverLibDir ];
+          }
+        else
+          pkgs.cudaPackages.cudatoolkit;
+
         # Create Python wrapper that preloads CUDA driver library
         # Note: libcuda.so.1 is provided by system NVIDIA driver, not Nix packages
         pythonWrapper = if pkgs.stdenv.isLinux then
@@ -73,7 +97,7 @@
           # Set up CUDA environment variables
           shellHook = if pkgs.stdenv.isLinux then
             ''
-              export CUDA_PATH=${pkgs.cudaPackages.cudatoolkit}
+              export CUDA_PATH=${cudaPathWithDriver}
               # Use Python wrapper that preloads CUDA
               export PATH="${pythonWrapper}/bin:$PATH"
             ''
