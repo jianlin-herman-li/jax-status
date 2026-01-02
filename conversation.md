@@ -671,3 +671,50 @@ If you want, I can:
 ```
 git commit and push
 ```
+
+## Message 22
+- Role: user
+- Content:
+```
+Can we make shellHook shorter and do the same logic more in nix?
+```
+
+## Message 23
+- Role: assistant
+- Content:
+```
+Shortened the shellHook by moving CUDA env vars into Nix attributes and encapsulating the driver-symlink logic in a generated script; the hook now just sources it, and `nix develop -c jax-status` still reports GPU devices.
+- `flake.nix` now sets `CUDA_HOME`, `CUDA_PATH`, `XLA_FLAGS`, and `LD_LIBRARY_PATH` via `mkShell`, and uses a `writeShellScript` helper for driver libs.
+- `jax_status/cli.py` now reports `JAX_DRIVER_LIB_DIR` and checks that directory instead of `.nvidia-driver-libs`.
+
+Verified: `nix develop -c jax-status` shows `jax.default_backend()` = `gpu` with CUDA devices visible.
+```
+
+## Message 24
+- Role: user
+- Content:
+```
+if [ -f /usr/lib/x86_64-linux-gnu/libcuda.so.1 ]; then
+              driver_dir="''${XDG_RUNTIME_DIR:-/tmp}/jax-status-driver-libs"
+              mkdir -p "$driver_dir"
+              ln -sf /usr/lib/x86_64-linux-gnu/libcuda.so.1 "$driver_dir/libcuda.so.1"
+              if [ -f /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 ]; then
+                ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 "$driver_dir/libnvidia-ml.so.1"
+              fi
+              export JAX_DRIVER_LIB_DIR="$driver_dir"
+              export LD_LIBRARY_PATH="$driver_dir:$LD_LIBRARY_PATH"
+            fi
+```
+
+## Message 25
+- Role: assistant
+- Content:
+```
+Yes—moved that logic into a Nix-generated helper so the `shellHook` is just a one‑liner that evaluates its output. The logic still executes at runtime (needed to see host driver files), but it’s now encapsulated by Nix.
+
+Changes:
+- `flake.nix` wraps the driver logic in `driverLibScript` and the hook is now `eval "$(${driverLibScript})"`.
+- All other CUDA env vars are still set via `mkShell` attributes.
+
+Verified: `nix develop -c jax-status` still reports GPU devices.
+```

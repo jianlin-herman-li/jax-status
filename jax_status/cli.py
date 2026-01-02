@@ -99,11 +99,12 @@ def main():
     _query("os.environ.get('CUDA_VISIBLE_DEVICES')", lambda: os.environ.get("CUDA_VISIBLE_DEVICES"))
     _query("os.environ.get('JAX_PLATFORM_NAME')", lambda: os.environ.get("JAX_PLATFORM_NAME"))
     _query("os.environ.get('LD_LIBRARY_PATH')", lambda: os.environ.get("LD_LIBRARY_PATH"))
+    _query("os.environ.get('JAX_DRIVER_LIB_DIR')", lambda: os.environ.get("JAX_DRIVER_LIB_DIR"))
     _query("os.path.exists('/dev/nvidia0')", lambda: os.path.exists("/dev/nvidia0"))
     _query("os.path.exists('/dev/nvidiactl')", lambda: os.path.exists("/dev/nvidiactl"))
     _query(
-        "os.path.exists('.nvidia-driver-libs/libcuda.so.1')",
-        lambda: os.path.exists(".nvidia-driver-libs/libcuda.so.1"),
+        "os.path.exists(os.environ.get('JAX_DRIVER_LIB_DIR', ''))",
+        lambda: os.path.exists(os.environ.get("JAX_DRIVER_LIB_DIR", "")),
     )
 
     _print_section("NVIDIA")
@@ -116,8 +117,8 @@ def main():
         lambda: subprocess.getoutput("ldconfig -p | grep -i libcuda"),
     )
     _query(
-        "subprocess.getoutput('ls -l .nvidia-driver-libs 2>/dev/null')",
-        lambda: subprocess.getoutput("ls -l .nvidia-driver-libs 2>/dev/null"),
+        "subprocess.getoutput('ls -l $JAX_DRIVER_LIB_DIR 2>/dev/null')",
+        lambda: subprocess.getoutput("ls -l ${JAX_DRIVER_LIB_DIR:-/no-jax-driver-lib-dir} 2>/dev/null"),
     )
     smi_has_gpus = ok_smi and _nvidia_smi_has_gpus(smi_output)
     if ok_smi and not smi_has_gpus:
