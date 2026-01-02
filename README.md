@@ -96,7 +96,8 @@ The repository should contain:
 
 - `jax-status.nix`  
   A Nix file that wraps this pyproject into a Nix derivation.
-
+  Use `buildPythonPackage`.
+  
 Nix files should be short and simple if possible.
   
 ## Nix Requirements
@@ -120,5 +121,9 @@ Nix files should be short and simple if possible.
    - Each corresponding value is printed
    - GPU visibility matches `nvidia-smi` on Linux systems
    - Missing or unsupported features are clearly reported
+
+## Note
+
+Make `jax-status` a true nix derivation via `buildPythonPackage`, don't use `pip install` in flake.nix.
 
 Automatically run `nix develop -c jax-status`, and fix errors until it succeeds.
