@@ -1,0 +1,18 @@
+[project]
+name = "jax-status"
+version = "0.1.0"
+description = "A minimal Python project to inspect JAX runtime status"
+requires-python = ">=3.12"
+dependencies = [
+    "jax[cuda]",
+]
+
+[project.scripts]
+jax-status = "jax_status.main:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["jax_status"]
