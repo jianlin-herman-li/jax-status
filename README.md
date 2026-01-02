@@ -6,6 +6,20 @@ Create a minimal Python project named **jax-status** with the following properti
 - Depends on `jax[cuda]`
 - Provides a verbose script or CLI that inspects the JAX runtime
 
+## Conversation Logging
+
+Persist the full conversation between the user and the system.
+
+After each interaction:
+
+- Save the exchanged messages between the user and the assistant
+- Preserve message order and roles
+- Use a clear, readable Markdown format
+
+The conversation must be written to a file named `conversation.md`.
+
+If the file already exists, append new interactions in chronological order so the full history is retained.
+
 ## Cost Tracking
 
 Add basic cost and usage tracking to the project.
