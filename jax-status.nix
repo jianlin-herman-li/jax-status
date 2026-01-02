@@ -1,8 +1,22 @@
 { lib
 , python3
 , python3Packages
-, jaxlib ? python3Packages.jaxlib
+, stdenv
+, cudaPackages ? null
 }:
+
+let
+  # Use CUDA-enabled JAX on Linux
+  jaxlibCuda = if stdenv.isLinux && lib.hasAttr "jaxlibWithCuda" python3Packages then
+    python3Packages.jaxlibWithCuda
+  else if stdenv.isLinux && cudaPackages != null then
+    python3Packages.jaxlib.override {
+      cudaSupport = true;
+      cudaPackages = cudaPackages;
+    }
+  else
+    python3Packages.jaxlib;
+in
 
 python3Packages.buildPythonPackage rec {
   pname = "jax-status";
@@ -18,7 +32,7 @@ python3Packages.buildPythonPackage rec {
 
   propagatedBuildInputs = [
     python3Packages.jax
-    jaxlib
+    jaxlibCuda
   ];
 
   meta = with lib; {

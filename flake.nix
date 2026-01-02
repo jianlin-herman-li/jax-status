@@ -19,20 +19,11 @@
         };
         # Use Python 3.12
         python312 = pkgs.python312;
-        # Use CUDA-enabled JAX on Linux
-        jaxlibCuda = if pkgs.stdenv.isLinux && pkgs.lib.hasAttr "jaxlibWithCuda" python312.pkgs then
-          python312.pkgs.jaxlibWithCuda
-        else if pkgs.stdenv.isLinux then
-          python312.pkgs.jaxlib.override {
-            cudaSupport = true;
-            cudaPackages = pkgs.cudaPackages;
-          }
-        else
-          python312.pkgs.jaxlib;
         jax-status = pkgs.callPackage ./jax-status.nix {
           python3 = python312;
           python3Packages = python312.pkgs;
-          jaxlib = jaxlibCuda;
+          stdenv = pkgs.stdenv;
+          cudaPackages = if pkgs.stdenv.isLinux then pkgs.cudaPackages else null;
         };
       in
       {
