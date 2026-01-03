@@ -174,50 +174,30 @@ def main():
         return "unavailable (no jax_platforms attribute)"
 
     _query("jax.config.jax_platforms", _jax_platforms)
-    _query(
-        "jax.lib.xla_bridge.get_backend().platform",
-        lambda: jax.lib.xla_bridge.get_backend().platform,
-    )
-
-    def _platform_version():
-        backend = jax.lib.xla_bridge.get_backend()
-        if hasattr(backend, "platform_version"):
-            return backend.platform_version
-        return "unavailable (no platform_version attribute)"
-
-    _query("jax.lib.xla_bridge.get_backend().platform_version", _platform_version)
-
     try:
         import jax.extend
     except Exception as exc:
         print("ERROR: Failed to import jax.extend: " + type(exc).__name__ + ": " + str(exc))
-        jax_extend_ok = False
+        backend_ok = False
+        backend = None
     else:
-        jax_extend_ok = True
-
-    if jax_extend_ok:
-        _query(
-            "jax.extend.backend.get_backend().platform",
-            lambda: jax.extend.backend.get_backend().platform,
+        backend_ok, backend = _query(
+            "jax.extend.backend.get_backend()",
+            lambda: jax.extend.backend.get_backend(),
         )
 
-        def _extend_platform_version():
-            backend = jax.extend.backend.get_backend()
-            if hasattr(backend, "platform_version"):
-                return backend.platform_version
-            return "unavailable (no platform_version attribute)"
-
-        _query("jax.extend.backend.get_backend().platform_version", _extend_platform_version)
+    if backend_ok:
+        _query("jax.extend.backend.get_backend().platform", lambda: backend.platform)
+        _query(
+            "jax.extend.backend.get_backend().platform_version",
+            lambda: getattr(backend, "platform_version", "unavailable (no platform_version attribute)"),
+        )
+    else:
+        print("NOTE: Skipping backend platform queries; jax.extend backend unavailable.")
 
     def _cuda_version_hint():
-        backend = None
-        try:
-            backend = jax.extend.backend.get_backend()
-        except Exception:
-            try:
-                backend = jax.lib.xla_bridge.get_backend()
-            except Exception as exc:
-                return "unavailable (backend lookup failed): " + type(exc).__name__ + ": " + str(exc)
+        if not backend_ok or backend is None:
+            return "unavailable (jax.extend backend unavailable)"
         platform_version = getattr(backend, "platform_version", "")
         if not platform_version:
             return "unavailable (no platform_version)"

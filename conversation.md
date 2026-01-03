@@ -926,3 +926,17 @@ Added an NVML diagnostics block to the CLI so we can see exactly which `libnvidi
 Updated:
 - `jax_status/cli.py` now prints `NVML lib path` and `NVML lib realpath` based on `LD_LIBRARY_PATH` and common system locations.
 ```
+
+## Message 48
+- Role: user
+- Content:
+```
+refactor jax_status/cli.py based on output from `nix develop -c jax-status`, update deprecated APIs
+```
+
+## Message 49
+- Role: assistant
+- Content:
+```
+Updated `jax_status/cli.py` to stop calling deprecated `jax.lib.xla_bridge.get_backend()` APIs and use `jax.extend.backend.get_backend()` instead. The CUDA version hint now reads from the new backend API only. Re-ran `nix develop -c jax-status` to confirm the deprecated errors are gone and the new backend lines are printed.
+```
