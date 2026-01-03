@@ -10,8 +10,13 @@ python312Packages.buildPythonPackage {
   src = ./.;
 
   nativeBuildInputs = [
+    python312Packages.pythonRelaxDepsHook
     python312Packages.setuptools
     python312Packages.wheel
+  ];
+
+  pythonRelaxDeps = [
+    "jax"
   ];
 
   propagatedBuildInputs = [
