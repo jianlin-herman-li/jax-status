@@ -28,6 +28,26 @@ def _env_first(keys, default="unknown"):
     return default
 
 
+def _find_library_path(name):
+    paths = []
+    ld_path = os.environ.get("LD_LIBRARY_PATH")
+    if ld_path:
+        paths.extend([p for p in ld_path.split(":") if p])
+    paths.extend(
+        [
+            "/usr/lib/x86_64-linux-gnu",
+            "/usr/lib64",
+            "/usr/lib",
+            "/run/opengl-driver/lib",
+        ]
+    )
+    for base in paths:
+        candidate = os.path.join(base, name)
+        if os.path.exists(candidate):
+            return candidate
+    return ""
+
+
 def _append_cost(start_wall, end_wall, wall_time, status):
     agent_name = _env_first(["CODEX_AGENT", "AGENT_NAME", "OPENAI_AGENT"], "unknown")
     model_name = _env_first(["CODEX_MODEL", "OPENAI_MODEL", "MODEL_NAME"], "unknown")
@@ -105,6 +125,11 @@ def main():
     _query(
         "os.path.exists(os.environ.get('JAX_DRIVER_LIB_DIR', ''))",
         lambda: os.path.exists(os.environ.get("JAX_DRIVER_LIB_DIR", "")),
+    )
+    _query("NVML lib path", lambda: _find_library_path("libnvidia-ml.so.1"))
+    _query(
+        "NVML lib realpath",
+        lambda: os.path.realpath(_find_library_path("libnvidia-ml.so.1") or ""),
     )
 
     _print_section("NVIDIA")

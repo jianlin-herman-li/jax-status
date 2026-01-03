@@ -888,3 +888,41 @@ Changes:
 
 Verified: `nix develop -c jax-status` now reports GPU devices and no cuDNN version mismatch errors.
 ```
+
+## Message 44
+- Role: user
+- Content:
+```
+trobule shoot warnings from nix develop -c jax-status
+```
+
+## Message 45
+- Role: assistant
+- Content:
+```
+Those warnings come from the CUDA runtime trying to query NVML for GPU interconnect topology. They’re usually benign and don’t affect device visibility (as seen: JAX still reports GPUs). It typically means the driver’s NVML is older than what the wheel expects, or the driver library path doesn’t expose the needed NVML symbols.
+
+Options to address them:
+- Update the NVIDIA driver to a newer branch (often 550+), which provides newer NVML functions.
+- Keep current driver and suppress the warnings by setting `TF_CPP_MIN_LOG_LEVEL=2` in the dev shell.
+- If you want, I can add a quick NVML sanity check in the CLI to show which `libnvidia-ml.so.1` is being loaded.
+
+Tell me which route you want and I’ll wire it up.
+```
+
+## Message 46
+- Role: user
+- Content:
+```
+3
+```
+
+## Message 47
+- Role: assistant
+- Content:
+```
+Added an NVML diagnostics block to the CLI so we can see exactly which `libnvidia-ml.so.1` is being resolved at runtime (path + realpath). This helps explain the NVML warnings and whether the driver library is being picked up from the expected location.
+
+Updated:
+- `jax_status/cli.py` now prints `NVML lib path` and `NVML lib realpath` based on `LD_LIBRARY_PATH` and common system locations.
+```
