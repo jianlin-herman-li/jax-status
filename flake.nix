@@ -2,10 +2,11 @@
   description = "jax-status";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-cuda.url = "github:NixOS/nixpkgs/nixos-25.05";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, nixpkgs-cuda }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
@@ -13,6 +14,14 @@
     {
       packages = forAllSystems (system:
         let
+          pkgsCuda = import nixpkgs-cuda {
+            inherit system;
+            config = {
+              allowUnfree = true;
+              cudaCapabilities = [ "7.5" ];
+              cudaForwardCompat = false;
+            };
+          };
           pkgs = import nixpkgs {
             inherit system;
             config = {
@@ -20,11 +29,8 @@
               cudaCapabilities = [ "7.5" ];
               cudaForwardCompat = false;
             };
-            overlays = [
-              (final: prev: { cudaPackages = prev.cudaPackages_12_2; })
-            ];
           };
-          pyPkgs = pkgs.python312Packages;
+          pyPkgs = if pkgs.stdenv.isLinux then pkgsCuda.python312Packages else pkgs.python312Packages;
           jaxCpu = pyPkgs.jax.overridePythonAttrs (_: { doCheck = false; });
           jaxCuda =
             if pkgs.stdenv.isLinux then
@@ -42,6 +48,14 @@
 
       devShells = forAllSystems (system:
         let
+          pkgsCuda = import nixpkgs-cuda {
+            inherit system;
+            config = {
+              allowUnfree = true;
+              cudaCapabilities = [ "7.5" ];
+              cudaForwardCompat = false;
+            };
+          };
           pkgs = import nixpkgs {
             inherit system;
             config = {
@@ -49,12 +63,9 @@
               cudaCapabilities = [ "7.5" ];
               cudaForwardCompat = false;
             };
-            overlays = [
-              (final: prev: { cudaPackages = prev.cudaPackages_12_2; })
-            ];
           };
-          py = pkgs.python312;
-          pyPkgs = pkgs.python312Packages;
+          py = if pkgs.stdenv.isLinux then pkgsCuda.python312 else pkgs.python312;
+          pyPkgs = if pkgs.stdenv.isLinux then pkgsCuda.python312Packages else pkgs.python312Packages;
           jaxCpu = pyPkgs.jax.overridePythonAttrs (_: { doCheck = false; });
           jaxCuda =
             if pkgs.stdenv.isLinux then
