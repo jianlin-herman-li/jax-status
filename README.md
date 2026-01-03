@@ -52,7 +52,7 @@ The script must be **verbose** and:
 - Call APIs using **fully-qualified names** only
 
 ### APIs to try (minimum set)
-The script should attempt and print results for APIs such as:
+The script should attempt and print results for APIs when avaliable such as:
 - `sys.version`
 - `sys.executable`
 - `print(subprocess.getoutput("nvidia-smi"))`
@@ -63,7 +63,7 @@ The script should attempt and print results for APIs such as:
 - `jax.device_count()`
 - `jax.local_devices()`
 - `jax.lib.xla_bridge.get_backend().platform`
-- `jax.lib.xla_bridge.get_backend().platform_version` when available
+- `jax.lib.xla_bridge.get_backend().platform_version`
 - CUDA-related metadata when available, including:
   - CUDA version
   - GPU visibility to JAX
@@ -93,6 +93,7 @@ The repository should contain:
 
 - `flake.nix`  
   Nix flake entry point.
+  Use nixos 25.05 or 25.11
 
 - `jax-status.nix`  
   A Nix file that wraps this pyproject into a Nix derivation.
@@ -102,7 +103,7 @@ Nix files should be short and simple if possible.
   
 ## Nix Requirements
 
-- Use **NixOS 24.11**
+- Use **NixOS 25.05 or 25.11**
 - `nix develop` must work on macOS and Ubuntu Linux
 - The development shell should:
   - Provide Python 3.12

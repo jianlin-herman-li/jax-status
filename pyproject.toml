@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jax-status"
+version = "0.1.0"
+description = "Verbose JAX runtime status inspector"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["jax[cuda]"]
+
+[project.scripts]
+jax-status = "jax_status.cli:main"
+
+[tool.setuptools]
+packages = ["jax_status"]
