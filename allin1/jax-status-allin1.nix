@@ -2,33 +2,33 @@
 # This file hardcodes everything: package definition, CUDA setup, and development shell
 # 
 # Usage:
-#   - As a flake: import this file in flake.nix
-#   - Standalone: nix-shell -E 'let result = import ./jax-status-allin1.nix { pkgs = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-24.11.tar.gz") { config = { allowUnfree = true; cudaSupport = true; }; }; }; in result.devShell'
+#   - As a flake: pkgs.callPackage ./jax-status-allin1.nix { }
+#   - Standalone: nix-shell -E 'let pkgs = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-24.11.tar.gz") { config = { allowUnfree = true; cudaSupport = true; }; }; in (pkgs.callPackage ./jax-status-allin1.nix { }).devShell'
 #
 # Note: For best results, use with a pinned nixpkgs version (e.g., nixos-24.11)
 
-{ lib ? (import <nixpkgs> { }).lib
-, pkgs ? import <nixpkgs> {
-    config = {
-      # Enable CUDA support on Linux
-      allowUnfree = true;
-      cudaSupport = true;
-    };
-  }
-, system ? builtins.currentSystem
+{ lib
+, stdenv
+, python3Packages
+, python3
+, cudaPackages
+, runCommand
+, writeText
+, symlinkJoin
+, mkShell
 }:
 
 let
-  # Use Python 3.12
-  python312 = pkgs.python312;
+  # Use Python 3.12 (python3 should be python312 when called from flake)
+  python312 = python3;
   
   # Use CUDA-enabled JAX on Linux
-  jaxlibCuda = if pkgs.stdenv.isLinux && pkgs.lib.hasAttr "jaxlibWithCuda" python312.pkgs then
+  jaxlibCuda = if stdenv.isLinux && lib.hasAttr "jaxlibWithCuda" python312.pkgs then
     python312.pkgs.jaxlibWithCuda
-  else if pkgs.stdenv.isLinux then
+  else if stdenv.isLinux then
     python312.pkgs.jaxlib.override {
       cudaSupport = true;
-      cudaPackages = pkgs.cudaPackages;
+      cudaPackages = cudaPackages;
     }
   else
     python312.pkgs.jaxlib;
@@ -37,12 +37,12 @@ let
   # This makes the driver library discoverable via CUDA_PATH/lib/libcuda.so.1
   # Note: The symlink points to the most common system location
   # If the library doesn't exist at that path, the symlink will be broken but harmless
-  cudaPathWithDriver = if pkgs.stdenv.isLinux then
+  cudaPathWithDriver = if stdenv.isLinux then
     let
       # Create a directory with symlink to system libcuda.so.1
       # We symlink to the most common location (/usr/lib/x86_64-linux-gnu/libcuda.so.1)
       # The symlink will be resolved at runtime when the library is actually accessed
-      driverLibDir = pkgs.runCommand "cuda-driver-lib" {} ''
+      driverLibDir = runCommand "cuda-driver-lib" {} ''
         mkdir -p $out/lib
         # Create symlink to most common system location
         # This will be resolved at runtime when accessed
@@ -50,15 +50,15 @@ let
       '';
     in
       # Combine CUDA toolkit with driver library symlink
-      pkgs.symlinkJoin {
+      symlinkJoin {
         name = "cuda-with-driver";
-        paths = [ pkgs.cudaPackages.cudatoolkit driverLibDir ];
+        paths = [ cudaPackages.cudatoolkit driverLibDir ];
       }
   else
-    pkgs.cudaPackages.cudatoolkit;
+    cudaPackages.cudatoolkit;
 
   # Hardcoded source files - exact copy-paste from actual files
-  pyprojectToml = pkgs.writeText "pyproject.toml" ''
+  pyprojectToml = writeText "pyproject.toml" ''
 [project]
 name = "jax-status"
 version = "0.1.0"
@@ -79,13 +79,13 @@ build-backend = "setuptools.build_meta"
 packages = ["jax_status"]
   '';
 
-  jaxStatusInit = pkgs.writeText "jax_status/__init__.py" ''
+  jaxStatusInit = writeText "jax_status/__init__.py" ''
 """JAX status inspection package."""
 
 __version__ = "0.1.0"
   '';
 
-  jaxStatusMain = pkgs.writeText "jax_status/main.py" ''
+  jaxStatusMain = writeText "jax_status/main.py" ''
 #!/usr/bin/env python3
 """Verbose JAX runtime inspection script."""
 
@@ -286,7 +286,7 @@ if __name__ == "__main__":
   '';
 
   # Create source tree from hardcoded files
-  sourceTree = pkgs.runCommand "jax-status-src" {} ''
+  sourceTree = runCommand "jax-status-src" {} ''
     mkdir -p $out/jax_status
     cp ${pyprojectToml} $out/pyproject.toml
     cp ${jaxStatusInit} $out/jax_status/__init__.py
@@ -321,14 +321,11 @@ if __name__ == "__main__":
 
 in
 {
-  # Package outputs
-  packages = {
-    default = jax-status;
-    jax-status = jax-status;
-  };
-
+  # Package derivation
+  package = jax-status;
+  
   # Development shell
-  devShell = pkgs.mkShell {
+  devShell = mkShell {
     buildInputs = [
       jax-status
       python312
@@ -336,18 +333,18 @@ in
       # Add JAX with CUDA support to the development shell
       python312.pkgs.jax
       jaxlibCuda
-    ] ++ (if pkgs.stdenv.isLinux then [
+    ] ++ (if stdenv.isLinux then [
       # Add CUDA libraries to the environment
-      pkgs.cudaPackages.cudatoolkit
-      pkgs.cudaPackages.libcublas
-      pkgs.cudaPackages.libcurand
-      pkgs.cudaPackages.libcusolver
-      pkgs.cudaPackages.libcusparse
-      pkgs.cudaPackages.cudnn
+      cudaPackages.cudatoolkit
+      cudaPackages.libcublas
+      cudaPackages.libcurand
+      cudaPackages.libcusolver
+      cudaPackages.libcusparse
+      cudaPackages.cudnn
     ] else []);
     
     # Set up CUDA environment variables
-    shellHook = if pkgs.stdenv.isLinux then
+    shellHook = if stdenv.isLinux then
       ''
         export CUDA_PATH=${cudaPathWithDriver}
         # Add CUDA_PATH/lib to LD_LIBRARY_PATH so libcuda.so.1 symlink is discoverable

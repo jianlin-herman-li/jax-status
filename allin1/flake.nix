@@ -18,16 +18,15 @@
           };
         };
         
-        # Import the all-in-one Nix file
-        # Path is relative to the flake.nix location (allin1 directory)
-        allin1 = import ./jax-status-allin1.nix {
-          inherit pkgs;
-          lib = pkgs.lib;
+        # Call the all-in-one Nix file as a derivation
+        # Override python3 to use python312
+        allin1 = pkgs.callPackage ./jax-status-allin1.nix {
+          python3 = pkgs.python312;
         };
       in
       {
-        packages.default = allin1.packages.jax-status;
-        packages.jax-status = allin1.packages.jax-status;
+        packages.default = allin1.package;
+        packages.jax-status = allin1.package;
 
         devShells.default = allin1.devShell;
       });
