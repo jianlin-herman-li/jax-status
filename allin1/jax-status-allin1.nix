@@ -9,8 +9,7 @@
 
 { lib
 , stdenv
-, python3Packages
-, python3
+, python312
 , cudaPackages
 , runCommand
 , writeText
@@ -18,10 +17,7 @@
 , mkShell
 }:
 
-let
-  # Use Python 3.12 (python3 should be python312 when called from flake)
-  python312 = python3;
-  
+let  
   # Use CUDA-enabled JAX on Linux
   jaxlibCuda = if stdenv.isLinux && lib.hasAttr "jaxlibWithCuda" python312.pkgs then
     python312.pkgs.jaxlibWithCuda
