@@ -1,4 +1,4 @@
-{ lib, fetchurl, python312Packages, stdenv }:
+{ lib, fetchurl, python312Packages, stdenv, numpyPkg, mlDtypesPkg, scipyPkg }:
 
 let
   version = "0.8.1";
@@ -29,9 +29,9 @@ python312Packages.buildPythonPackage {
 
   propagatedBuildInputs = [
     stdenv.cc.cc.lib
-    python312Packages."ml-dtypes"
-    python312Packages.numpy
-    python312Packages.scipy
+    mlDtypesPkg
+    numpyPkg
+    scipyPkg
   ];
 
   dontCheckRuntimeDeps = true;

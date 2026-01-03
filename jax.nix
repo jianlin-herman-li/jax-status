@@ -1,4 +1,4 @@
-{ lib, fetchurl, python312Packages, jaxlibPkg, stdenv }:
+{ lib, fetchurl, python312Packages, jaxlibPkg, stdenv, numpyPkg, mlDtypesPkg, scipyPkg, optEinsumPkg }:
 
 let
   version = "0.8.1";
@@ -15,10 +15,10 @@ python312Packages.buildPythonPackage {
   propagatedBuildInputs = [
     stdenv.cc.cc.lib
     jaxlibPkg
-    python312Packages."ml-dtypes"
-    python312Packages.numpy
-    python312Packages."opt-einsum"
-    python312Packages.scipy
+    mlDtypesPkg
+    numpyPkg
+    optEinsumPkg
+    scipyPkg
   ];
 
   dontCheckRuntimeDeps = true;

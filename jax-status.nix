@@ -1,8 +1,12 @@
 { callPackage, lib, stdenv, python312Packages }:
 
 let
-  jaxlibPkg = callPackage ./jaxlib.nix { };
-  jaxPkg = callPackage ./jax.nix { inherit jaxlibPkg; };
+  numpyPkg = python312Packages.numpy_2;
+  mlDtypesPkg = callPackage ./ml-dtypes.nix { };
+  scipyPkg = callPackage ./scipy.nix { };
+  optEinsumPkg = callPackage ./opt-einsum.nix { };
+  jaxlibPkg = callPackage ./jaxlib.nix { inherit numpyPkg mlDtypesPkg scipyPkg; };
+  jaxPkg = callPackage ./jax.nix { inherit jaxlibPkg numpyPkg mlDtypesPkg scipyPkg optEinsumPkg; };
   cudaPluginPkg =
     if stdenv.isLinux
     then callPackage ./jax-cuda12-plugin.nix { }
@@ -27,6 +31,8 @@ python312Packages.buildPythonPackage {
     [
       jaxPkg
       jaxlibPkg
+      numpyPkg
+      scipyPkg
     ]
     ++ lib.optional (cudaPluginPkg != null) cudaPluginPkg
     ++ lib.optional (cudaPjrtPkg != null) cudaPjrtPkg;
