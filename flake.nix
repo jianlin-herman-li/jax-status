@@ -27,14 +27,25 @@
       devShells = forAllSystems (system:
         let
           pkgs = import nixpkgs { inherit system; config.allowUnfree = allowUnfree; };
+          cudnnWheel =
+            if pkgs.stdenv.isLinux && allowUnfree
+            then pkgs.callPackage ./nvidia-cudnn-cu12.nix { }
+            else null;
           cudaPkgs =
             if pkgs.stdenv.isLinux && allowUnfree
             then [
               pkgs.cudaPackages.cudatoolkit
-              pkgs.cudaPackages.cudnn
             ]
             else [ ];
-          cudaLibPath = pkgs.lib.makeLibraryPath cudaPkgs;
+          cudnnWheelLib =
+            if cudnnWheel != null
+            then "${cudnnWheel}/${pkgs.python312.sitePackages}/nvidia/cudnn/lib"
+            else "";
+          runtimeLibs =
+            if pkgs.stdenv.isLinux
+            then cudaPkgs ++ [ pkgs.stdenv.cc.cc.lib ]
+            else [ ];
+          runtimeLibPath = pkgs.lib.makeLibraryPath runtimeLibs;
           cudaHome =
             if pkgs.stdenv.isLinux && allowUnfree
             then pkgs.cudaPackages.cudatoolkit
@@ -67,7 +78,9 @@
               CUDA_HOME = cudaHome;
               CUDA_PATH = cudaHome;
               XLA_FLAGS = "--xla_gpu_cuda_data_dir=${cudaHome}";
-              LD_LIBRARY_PATH = cudaLibPath;
+              LD_LIBRARY_PATH =
+                pkgs.lib.optionalString (cudnnWheelLib != "") "${cudnnWheelLib}:"
+                + runtimeLibPath;
             }
             else { };
         in
@@ -76,7 +89,7 @@
             packages = [
               pkgs.python312
               (pkgs.callPackage ./jax-status.nix { })
-            ] ++ cudaPkgs;
+            ] ++ cudaPkgs ++ pkgs.lib.optional (cudnnWheel != null) cudnnWheel;
             shellHook = ''
               ${pkgs.lib.optionalString (pkgs.stdenv.isLinux && allowUnfree) ''
               eval "$(${driverLibScript})"

@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Verbose JAX runtime status inspection"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["jax[cuda]"]
+dependencies = ["jax[cuda]>=0.8"]
 
 [project.scripts]
 jax-status = "jax_status.cli:main"

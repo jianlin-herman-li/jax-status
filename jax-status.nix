@@ -1,16 +1,16 @@
-{ lib, stdenv, python312Packages, config }:
+{ callPackage, lib, stdenv, python312Packages }:
 
 let
-  allowUnfree = config.allowUnfree or false;
-  allowUnfreePredicate = config.allowUnfreePredicate or (_: false);
-  hasJaxlibCuda = lib.hasAttr "jaxlibWithCuda" python312Packages;
-  cudaAllowed = allowUnfree || (hasJaxlibCuda && allowUnfreePredicate python312Packages.jaxlibWithCuda);
-  jaxlibCuda =
-    if hasJaxlibCuda && cudaAllowed
-    then python312Packages.jaxlibWithCuda
-    else python312Packages.jaxlib;
-  jaxlibPkg = if stdenv.isLinux then jaxlibCuda else python312Packages.jaxlib;
-  jaxPkg = python312Packages.jax.override { jaxlib = jaxlibPkg; };
+  jaxlibPkg = callPackage ./jaxlib.nix { };
+  jaxPkg = callPackage ./jax.nix { inherit jaxlibPkg; };
+  cudaPluginPkg =
+    if stdenv.isLinux
+    then callPackage ./jax-cuda12-plugin.nix { }
+    else null;
+  cudaPjrtPkg =
+    if stdenv.isLinux
+    then callPackage ./jax-cuda12-pjrt.nix { }
+    else null;
 in
 python312Packages.buildPythonPackage {
   pname = "jax-status";
@@ -23,10 +23,13 @@ python312Packages.buildPythonPackage {
     python312Packages.wheel
   ];
 
-  propagatedBuildInputs = [
-    jaxPkg
-    jaxlibPkg
-  ];
+  propagatedBuildInputs =
+    [
+      jaxPkg
+      jaxlibPkg
+    ]
+    ++ lib.optional (cudaPluginPkg != null) cudaPluginPkg
+    ++ lib.optional (cudaPjrtPkg != null) cudaPjrtPkg;
 
   pythonImportsCheck = [ "jax_status" ];
   doCheck = false;

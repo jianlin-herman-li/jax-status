@@ -162,8 +162,37 @@ def main():
 
     _query("jax.lib.xla_bridge.get_backend().platform_version", _platform_version)
 
+    try:
+        import jax.extend
+    except Exception as exc:
+        print("ERROR: Failed to import jax.extend: " + type(exc).__name__ + ": " + str(exc))
+        jax_extend_ok = False
+    else:
+        jax_extend_ok = True
+
+    if jax_extend_ok:
+        _query(
+            "jax.extend.backend.get_backend().platform",
+            lambda: jax.extend.backend.get_backend().platform,
+        )
+
+        def _extend_platform_version():
+            backend = jax.extend.backend.get_backend()
+            if hasattr(backend, "platform_version"):
+                return backend.platform_version
+            return "unavailable (no platform_version attribute)"
+
+        _query("jax.extend.backend.get_backend().platform_version", _extend_platform_version)
+
     def _cuda_version_hint():
-        backend = jax.lib.xla_bridge.get_backend()
+        backend = None
+        try:
+            backend = jax.extend.backend.get_backend()
+        except Exception:
+            try:
+                backend = jax.lib.xla_bridge.get_backend()
+            except Exception as exc:
+                return "unavailable (backend lookup failed): " + type(exc).__name__ + ": " + str(exc)
         platform_version = getattr(backend, "platform_version", "")
         if not platform_version:
             return "unavailable (no platform_version)"
