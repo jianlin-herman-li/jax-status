@@ -74,23 +74,33 @@
               jaxCpu;
           jaxStatusCpu = pkgs.callPackage ./jax-status.nix { python312Packages = pyPkgs; jax = jaxCpu; };
           jaxStatusCuda = pkgs.callPackage ./jax-status.nix { python312Packages = pyPkgs; jax = jaxCuda; };
+          # Expose ONLY the host NVIDIA driver libs (libcuda + NVML) to the nix-built
+          # jaxlib, via a curated symlink farm on LD_LIBRARY_PATH. Adding the whole host
+          # lib dir would shadow nix's glibc/vdso and break the toolchain.
+          driverLibHook = ''
+            export PYTHONPATH="$PWD''${PYTHONPATH:+:}$PYTHONPATH"
+          '' + nixpkgs.lib.optionalString pkgs.stdenv.isLinux ''
+            _drv=$(mktemp -d)
+            for _lib in libcuda.so.1 libnvidia-ml.so.1; do
+              for _d in /run/opengl-driver/lib /usr/lib/x86_64-linux-gnu /usr/lib64; do
+                if [ -e "$_d/$_lib" ]; then ln -sf "$_d/$_lib" "$_drv/$_lib"; break; fi
+              done
+            done
+            export LD_LIBRARY_PATH="$_drv''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          '';
         in
         {
           default = pkgs.mkShell {
             packages =
               if pkgs.stdenv.isLinux then
-                [ py jaxCuda jaxStatusCuda ]
+                [ py jaxCuda jaxStatusCuda pkgs.fish ]
               else
-                [ py jaxCpu jaxStatusCpu ];
-            shellHook = ''
-              export PYTHONPATH="$PWD''${PYTHONPATH:+:}$PYTHONPATH"
-            '';
+                [ py jaxCpu jaxStatusCpu pkgs.fish ];
+            shellHook = driverLibHook;
           };
           cuda = pkgs.mkShell {
-            packages = [ py jaxCuda jaxStatusCuda ];
-            shellHook = ''
-              export PYTHONPATH="$PWD''${PYTHONPATH:+:}$PYTHONPATH"
-            '';
+            packages = [ py jaxCuda jaxStatusCuda pkgs.fish ];
+            shellHook = driverLibHook;
           };
         }
       );
