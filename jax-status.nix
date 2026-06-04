@@ -1,7 +1,8 @@
-{ lib
-, fetchFromGitHub
-, python3Packages
-, jax ? python3Packages.jax
+{
+  lib,
+  fetchFromGitHub,
+  python3Packages,
+  jax ? python3Packages.jax,
 }:
 
 python3Packages.buildPythonPackage {
