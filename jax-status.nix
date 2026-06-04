@@ -1,18 +1,18 @@
 { lib
-, python312Packages
-, jax ? python312Packages.jax
+, python3Packages
+, jax ? python3Packages.jax
 }:
 
-python312Packages.buildPythonPackage {
+python3Packages.buildPythonPackage {
   pname = "jax-status";
   version = "0.1.0";
   pyproject = true;
   src = ./.;
 
   nativeBuildInputs = [
-    python312Packages.pythonRelaxDepsHook
-    python312Packages.setuptools
-    python312Packages.wheel
+    python3Packages.pythonRelaxDepsHook
+    python3Packages.setuptools
+    python3Packages.wheel
   ];
 
   pythonRelaxDeps = [

@@ -4,22 +4,6 @@ import subprocess
 import sys
 import time
 
-def _ensure_system_cuda_driver():
-    if platform.system().lower() != "linux":
-        return
-    candidate_libs = [
-        "/usr/lib/x86_64-linux-gnu/libcuda.so.1",
-        "/usr/lib64/libcuda.so.1",
-    ]
-    for lib_path in candidate_libs:
-        if os.path.exists(lib_path):
-            try:
-                import ctypes
-                ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
-            except Exception:
-                return
-            return
-
 def _print_value(api_name, value):
     print(f"API: {api_name}")
     print(f"VALUE: {value}")
@@ -80,8 +64,6 @@ def main():
     _print_value("platform.platform", platform.platform())
 
     nvidia_smi_text = _try_call("subprocess.getoutput(\"nvidia-smi\")", _nvidia_smi_output)
-
-    _ensure_system_cuda_driver()
 
     try:
         import jax
