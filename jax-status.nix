@@ -12,8 +12,8 @@ python3Packages.buildPythonPackage {
   src = fetchFromGitHub {
     owner = "jianlin-herman-li";
     repo = "jax-status";
-    rev = "b72f780183889df2aa40754052b444191fce4a55"; # malphite
-    hash = "sha256-jBexDZoyCVoFx/kP8Q9fgMfoCNA+AIoDv5pf9VNUg3A=";
+    rev = "7a553df810f086fe3212512c33a93db6fe125f88"; # malphite
+    hash = "sha256-91hFAYj3R6AsbQaPXMO9zcZ5AuqmNOWsJgIIDiwwZl8=";
   };
 
   nativeBuildInputs = [
