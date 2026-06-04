@@ -93,13 +93,13 @@
           default = pkgs.mkShell {
             packages =
               if pkgs.stdenv.isLinux then
-                [ py jaxCuda jaxStatusCuda pkgs.fish ]
+                [ py jaxCuda jaxStatusCuda pkgs.fish pkgs.gh ]
               else
-                [ py jaxCpu jaxStatusCpu pkgs.fish ];
+                [ py jaxCpu jaxStatusCpu pkgs.fish pkgs.gh ];
             shellHook = driverLibHook;
           };
           cuda = pkgs.mkShell {
-            packages = [ py jaxCuda jaxStatusCuda pkgs.fish ];
+            packages = [ py jaxCuda jaxStatusCuda pkgs.fish pkgs.gh ];
             shellHook = driverLibHook;
           };
         }
