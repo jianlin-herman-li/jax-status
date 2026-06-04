@@ -4,6 +4,11 @@ import subprocess
 import sys
 import time
 
+# Hide benign XLA C++ warnings (e.g. NVLink/interconnect notices) while still
+# surfacing genuine errors. Must be set before JAX is imported. Respect an
+# explicit user override.
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+
 def _print_value(api_name, value):
     print(f"API: {api_name}")
     print(f"VALUE: {value}")
@@ -67,6 +72,7 @@ def main():
 
     try:
         import jax
+        import jax.extend
     except Exception as exc:
         _print_error("import jax", exc)
         return 1
@@ -80,12 +86,12 @@ def main():
     _try_call("jax.local_devices()", jax.local_devices)
 
     _try_call(
-        "jax.lib.xla_bridge.get_backend().platform",
-        lambda: jax.lib.xla_bridge.get_backend().platform,
+        "jax.extend.backend.get_backend().platform",
+        lambda: jax.extend.backend.get_backend().platform,
     )
     _try_call(
-        "jax.lib.xla_bridge.get_backend().platform_version",
-        lambda: jax.lib.xla_bridge.get_backend().platform_version,
+        "jax.extend.backend.get_backend().platform_version",
+        lambda: jax.extend.backend.get_backend().platform_version,
     )
 
     if platform.system().lower() == "linux":
