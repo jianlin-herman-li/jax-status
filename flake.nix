@@ -21,22 +21,23 @@
         python3Packages = pkgs.python3Packages;
         inherit jax;
       };
-      driverLibHook = ''
-        # jaxlib's RPATH points at NixOS-only /run/opengl-driver/lib. Expose this host's driver
-        # libs (libcuda + NVML, in /usr/lib/x86_64-linux-gnu) via a curated symlink farm on
-        # LD_LIBRARY_PATH; symlinking just these avoids shadowing nix's glibc with the host dir.
-        _drv=$(mktemp -d)
-        ln -sf /usr/lib/x86_64-linux-gnu/libcuda.so.1 "$_drv/"
-        ln -sf /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 "$_drv/"
-        export LD_LIBRARY_PATH="$_drv''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-      '';
+      # jaxlib's RPATH points at NixOS-only /run/opengl-driver/lib. Expose this host's NVIDIA
+      # driver libs (libcuda + NVML, in /usr/lib/x86_64-linux-gnu) as a small symlink farm so
+      # LD_LIBRARY_PATH carries just those — pointing it at the whole host dir would shadow
+      # nix's glibc and break the toolchain.
+      driverLibs = pkgs.linkFarm "nvidia-driver-libs" [
+        { name = "libcuda.so.1"; path = "/usr/lib/x86_64-linux-gnu/libcuda.so.1"; }
+        { name = "libnvidia-ml.so.1"; path = "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1"; }
+      ];
     in
     {
       packages.${system}.default = jax-status;
 
       devShells.${system}.default = pkgs.mkShell {
         packages = (with pkgs; [ python3 fish gh ]) ++ [ jax jax-status ];
-        shellHook = driverLibHook;
+        shellHook = ''
+          export LD_LIBRARY_PATH="${driverLibs}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        '';
       };
     };
 }
